@@ -40,8 +40,9 @@ class CategoryController {
                     "nama_kategori" => $input['nama_kategori'] ?? ''
                 ]
             ], 201);
+        // Pada fungsi store() dan update(), ubah 400 menjadi 422:
         } catch (InvalidArgumentException $e) {
-            $this->jsonResponse(["success" => false, "message" => $e->getMessage()], 400);
+            $this->jsonResponse(["success" => false, "message" => $e->getMessage()], 422);
         }
     }
 
@@ -54,8 +55,9 @@ class CategoryController {
                 return;
             }
             $this->jsonResponse(["success" => true, "message" => "Kategori berhasil diperbarui"]);
+        // Pada fungsi store() dan update(), ubah 400 menjadi 422:
         } catch (InvalidArgumentException $e) {
-            $this->jsonResponse(["success" => false, "message" => $e->getMessage()], 400);
+            $this->jsonResponse(["success" => false, "message" => $e->getMessage()], 422);
         }
     }
 

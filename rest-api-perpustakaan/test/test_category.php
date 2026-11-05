@@ -44,3 +44,8 @@ echo json_encode($res4) . "\n\n";
 echo "5. DELETE Kategori ID $newId:\n";
 $res5 = requestAPI($baseUrl . '/' . $newId, 'DELETE');
 echo json_encode($res5) . "\n";
+
+// 6. Validasi Nama Kosong (Harus Error 422)
+echo "\n6. POST Validasi Nama Kosong:\n";
+$res6 = requestAPI($baseUrl, 'POST', ['nama_kategori' => '']);
+echo json_encode($res6) . "\n";
