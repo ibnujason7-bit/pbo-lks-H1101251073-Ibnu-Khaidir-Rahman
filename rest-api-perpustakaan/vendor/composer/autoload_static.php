@@ -23,6 +23,11 @@ class ComposerStaticInit1dae3d7378b9d26bf7c7b29670abafc1
     public static $classMap = array (
         'App\\Config\\Env' => __DIR__ . '/../..' . '/src/Config/Env.php',
         'App\\Contracts\\BookRepositoryInterface' => __DIR__ . '/../..' . '/src/Contracts/BookRepositoryInterface.php',
+        'App\\Controllers\\BookController' => __DIR__ . '/../..' . '/src/Controllers/BookController.php',
+        'App\\Core\\Container' => __DIR__ . '/../..' . '/src/Core/Container.php',
+        'App\\Core\\Request' => __DIR__ . '/../..' . '/src/Core/Request.php',
+        'App\\Core\\Response' => __DIR__ . '/../..' . '/src/Core/Response.php',
+        'App\\Core\\Router' => __DIR__ . '/../..' . '/src/Core/Router.php',
         'App\\Database\\Connection' => __DIR__ . '/../..' . '/src/Database/Connection.php',
         'App\\Models\\Book' => __DIR__ . '/../..' . '/src/Models/Book.php',
         'App\\Repositories\\MySQLBookRepository' => __DIR__ . '/../..' . '/src/Repositories/MySQLBookRepository.php',
