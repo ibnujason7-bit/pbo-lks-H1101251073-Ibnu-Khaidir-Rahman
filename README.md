@@ -1,2 +1,5 @@
-# pbo-lks-H1101251073-Ibnu-Khaidir-Rahman
-pbo lks
+# LKS PBO - REST API
+- **Nama**: Ibnu Khaidir Rahman
+- **NIM**: H1101251073
+- **Kelas**: Pemrograman Berorientasi Objek (A)
+- **Program Studi**: Sistem Informasi
