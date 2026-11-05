@@ -10,6 +10,11 @@ use App\Core\Container;
 use App\Core\Router;
 use App\Core\Request;
 
+//Tambahan utk kategori
+use App\Repositories\MySQLCategoryRepository;
+use App\Services\CategoryService;
+use App\Controllers\CategoryController;
+
 // Load Env & Connection
 Env::load(__DIR__ . '/../.env');
 
@@ -28,6 +33,20 @@ $container->bind(BookService::class, function($c) {
 
 $container->bind(BookController::class, function($c) {
     return new BookController($c->make(BookService::class));
+});
+
+//Tambahan utk Kategori
+// Binding Category Service
+$container->bind(CategoryService::class, function($c) {
+    $pdo = $c->make(PDO::class);
+    $repo = new MySQLCategoryRepository($pdo);
+    return new CategoryService($repo);
+});
+
+// Binding Category Controller
+$container->bind(CategoryController::class, function($c) {
+    $service = $c->make(CategoryService::class);
+    return new CategoryController($service);
 });
 
 // Setup Router
@@ -56,6 +75,33 @@ $router->put('/api/books/{id}', function($id) use ($container, $request) {
 
 $router->delete('/api/books/{id}', function($id) use ($container) {
     $controller = $container->make(BookController::class);
+    $controller->destroy($id);
+});
+
+//Tambahan utk Kategori
+// Route Categories
+$router->get('/api/categories', function() use ($container) {
+    $controller = $container->make(CategoryController::class);
+    $controller->index();
+});
+
+$router->get('/api/categories/{id}', function($id) use ($container) {
+    $controller = $container->make(CategoryController::class);
+    $controller->show($id);
+});
+
+$router->post('/api/categories', function() use ($container) {
+    $controller = $container->make(CategoryController::class);
+    $controller->store();
+});
+
+$router->put('/api/categories/{id}', function($id) use ($container) {
+    $controller = $container->make(CategoryController::class);
+    $controller->update($id);
+});
+
+$router->delete('/api/categories/{id}', function($id) use ($container) {
+    $controller = $container->make(CategoryController::class);
     $controller->destroy($id);
 });
 
