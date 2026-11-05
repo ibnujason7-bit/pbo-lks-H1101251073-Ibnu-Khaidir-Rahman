@@ -13,3 +13,9 @@ CREATE TABLE IF NOT EXISTS books (
 INSERT INTO books (title, author, published_year) VALUES
 ('Belajar PHP Modern (PSR-4)', 'John Doe', 2023),
 ('Mastering Tailwind CSS', 'Jane Smith', 2024);
+
+CREATE TABLE IF NOT EXISTS categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama_kategori VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
