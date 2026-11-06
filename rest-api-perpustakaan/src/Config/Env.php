@@ -1,23 +1,32 @@
 <?php
-// File: src/Env.php
 namespace App\Config;
 
-class Env {
-    public static function load($path) {
-        if (!file_exists($path)) {
-            die("File .env tidak ditemukan di: " . $path);
+use RuntimeException;
+
+class Env
+{
+    private static array $vars = [];
+
+    public static function load(string $file): void
+    {
+        if (!file_exists($file)) {
+            throw new RuntimeException("File .env tidak ditemukan: $file");
         }
-        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($lines as $line) {
-            if (strpos(trim($line), '#') === 0) continue;
-            if (strpos($line, '=') !== false) {
-                list($name, $value) = explode('=', $line, 2);
-                $_ENV[trim($name)] = trim($value);
+            $line = trim($line);
+            if ($line === '' || str_starts_with($line, '#')) {
+                continue;
             }
+            [$key, $value] = array_pad(explode('=', $line, 2), 2, '');
+            $key = trim($key);
+            $value = trim($value, "\"'");
+            self::$vars[$key] = $value;
         }
     }
 
-    public static function get($key, $default = '') {
-        return $_ENV[$key] ?? $default;
+    public static function get(string $key, mixed $default = null): mixed
+    {
+        return self::$vars[$key] ?? $default;
     }
 }

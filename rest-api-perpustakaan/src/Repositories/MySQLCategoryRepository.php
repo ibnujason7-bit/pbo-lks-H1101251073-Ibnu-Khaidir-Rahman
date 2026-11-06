@@ -1,42 +1,67 @@
 <?php
-
 namespace App\Repositories;
 
 use App\Contracts\CategoryRepositoryInterface;
+use App\Models\Category;
 use PDO;
 
-class MySQLCategoryRepository implements CategoryRepositoryInterface {
-    private PDO $db;
+class MySQLCategoryRepository implements CategoryRepositoryInterface
+{
+    public function __construct(private PDO $pdo) {}
 
-    public function __construct(PDO $db) {
-        $this->db = $db;
+    public function findAll(): array
+    {
+        $stmt = $this->pdo->query("SELECT * FROM categories ORDER BY nama ASC");
+        return array_map(
+            fn(array $row) => $this->toModel($row),
+            $stmt->fetchAll()
+        );
     }
 
-    public function getAll(): array {
-        $stmt = $this->db->query("SELECT * FROM categories ORDER BY id DESC");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getById(int $id): ?array {
-        $stmt = $this->db->prepare("SELECT * FROM categories WHERE id = ?");
+    public function findById(int $id): ?Category
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM categories WHERE id = ?");
         $stmt->execute([$id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ?: null;
+        $row = $stmt->fetch();
+        return $row ? $this->toModel($row) : null;
     }
 
-    public function create(array $data): int {
-        $stmt = $this->db->prepare("INSERT INTO categories (nama_kategori) VALUES (?)");
-        $stmt->execute([$data['nama_kategori']]);
-        return (int)$this->db->lastInsertId();
+    public function save(Category $category): int
+    {
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO categories (nama, deskripsi) VALUES (?, ?)"
+        );
+        $stmt->execute([
+            $category->getNama(),
+            $category->getDeskripsi(),
+        ]);
+        return (int) $this->pdo->lastInsertId();
     }
 
-    public function update(int $id, array $data): bool {
-        $stmt = $this->db->prepare("UPDATE categories SET nama_kategori = ? WHERE id = ?");
-        return $stmt->execute([$data['nama_kategori'], $id]);
+    public function update(Category $category): bool
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE categories SET nama = ?, deskripsi = ? WHERE id = ?"
+        );
+        return $stmt->execute([
+            $category->getNama(),
+            $category->getDeskripsi(),
+            $category->getId(),
+        ]);
     }
 
-    public function delete(int $id): bool {
-        $stmt = $this->db->prepare("DELETE FROM categories WHERE id = ?");
+    public function delete(int $id): bool
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM categories WHERE id = ?");
         return $stmt->execute([$id]);
+    }
+
+    private function toModel(array $row): Category
+    {
+        return new Category(
+            (int) $row['id'],
+            $row['nama'],
+            $row['deskripsi'] ?? ''
+        );
     }
 }

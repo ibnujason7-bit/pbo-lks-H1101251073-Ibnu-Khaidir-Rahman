@@ -1,34 +1,30 @@
 <?php
 namespace App\Models;
 
-class Book {
-    private $id;
-    private $judul;
-    private $penulis;
-    private $tahun;
-    private $stok;
+class Book
+{
+    public function __construct(
+        private ?int $id,
+        private string $judul,
+        private string $penulis,
+        private int $tahun,
+        private int $stok
+    ) {}
 
-    public function __construct($id, $judul, $penulis, $tahun, $stok = 0) {
-        $this->id = $id;
-        $this->judul = $judul;
-        $this->penulis = $penulis;
-        $this->tahun = $tahun;
-        $this->stok = $stok;
-    }
+    public function getId(): ?int { return $this->id; }
+    public function getJudul(): string { return $this->judul; }
+    public function getPenulis(): string { return $this->penulis; }
+    public function getTahun(): int { return $this->tahun; }
+    public function getStok(): int { return $this->stok; }
 
-    public function getId() { return $this->id; }
-    public function getJudul() { return $this->judul; }
-    public function getPenulis() { return $this->penulis; }
-    public function getTahun() { return $this->tahun; }
-    public function getStok() { return $this->stok; }
-
-    public function toArray() {
+    public function toArray(): array
+    {
         return [
-            'id' => $this->id,
-            'judul' => $this->judul,
+            'id'      => $this->id,
+            'judul'   => $this->judul,
             'penulis' => $this->penulis,
-            'tahun' => $this->tahun,
-            'stok' => $this->stok
+            'tahun'   => $this->tahun,
+            'stok'    => $this->stok,
         ];
     }
 }

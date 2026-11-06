@@ -1,40 +1,73 @@
 <?php
-
 namespace App\Services;
 
 use App\Contracts\CategoryRepositoryInterface;
+use App\Models\Category;
 use InvalidArgumentException;
 
-class CategoryService {
-    private CategoryRepositoryInterface $repository;
+class CategoryService
+{
+    public function __construct(private CategoryRepositoryInterface $repo) {}
 
-    public function __construct(CategoryRepositoryInterface $repository) {
-        $this->repository = $repository;
+    public function list(): array
+    {
+        return array_map(
+            fn(Category $c) => $c->toArray(),
+            $this->repo->findAll()
+        );
     }
 
-    public function getAllCategories(): array {
-        return $this->repository->getAll();
-    }
-
-    public function getCategoryById(int $id): ?array {
-        return $this->repository->getById($id);
-    }
-
-    public function createCategory(array $data): int {
-        if (empty($data['nama_kategori'])) {
-            throw new InvalidArgumentException("Nama kategori wajib diisi");
+    public function detail(int $id): array
+    {
+        $category = $this->repo->findById($id);
+        if ($category === null) {
+            throw new InvalidArgumentException("Kategori dengan ID $id tidak ditemukan", 404);
         }
-        return $this->repository->create($data);
+        return $category->toArray();
     }
 
-    public function updateCategory(int $id, array $data): bool {
-        if (empty($data['nama_kategori'])) {
-            throw new InvalidArgumentException("Nama kategori wajib diisi");
+    public function create(array $data): array
+    {
+        $this->validate($data);
+        $category = new Category(
+            null,
+            $data['nama'],
+            $data['deskripsi'] ?? ''
+        );
+        $id = $this->repo->save($category);
+        return $this->detail($id);
+    }
+
+    public function update(int $id, array $data): array
+    {
+        if ($this->repo->findById($id) === null) {
+            throw new InvalidArgumentException("Kategori dengan ID $id tidak ditemukan", 404);
         }
-        return $this->repository->update($id, $data);
+        $this->validate($data);
+        $category = new Category(
+            $id,
+            $data['nama'],
+            $data['deskripsi'] ?? ''
+        );
+        $this->repo->update($category);
+        return $this->detail($id);
     }
 
-    public function deleteCategory(int $id): bool {
-        return $this->repository->delete($id);
+    public function delete(int $id): void
+    {
+        if ($this->repo->findById($id) === null) {
+            throw new InvalidArgumentException("Kategori dengan ID $id tidak ditemukan", 404);
+        }
+        $this->repo->delete($id);
+    }
+
+    private function validate(array $data): void
+    {
+        if (empty($data['nama'])) {
+            throw new InvalidArgumentException('Nama kategori wajib diisi', 422);
+        }
+        if (strlen($data['nama']) > 100) {
+            throw new InvalidArgumentException('Nama maksimal 100 karakter', 422);
+        }
     }
 }

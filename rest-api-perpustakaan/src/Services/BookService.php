@@ -2,52 +2,82 @@
 namespace App\Services;
 
 use App\Contracts\BookRepositoryInterface;
-use Exception;
+use App\Models\Book;
+use InvalidArgumentException;
 
-class BookService {
-    private $repository;
+class BookService
+{
+    public function __construct(private BookRepositoryInterface $repo) {}
 
-    public function __construct(BookRepositoryInterface $repository) {
-        $this->repository = $repository;
+    public function list(): array
+    {
+        return array_map(
+            fn(Book $b) => $b->toArray(),
+            $this->repo->findAll()
+        );
     }
 
-    public function list() {
-        return $this->repository->findAll();
-    }
-
-    public function getById($id) {
-        $book = $this->repository->findById($id);
-        if (!$book) {
-            throw new Exception("Buku dengan ID {$id} tidak ditemukan");
+    public function detail(int $id): array
+    {
+        $book = $this->repo->findById($id);
+        if ($book === null) {
+            throw new InvalidArgumentException("Buku dengan ID $id tidak ditemukan", 404);
         }
-        return $book;
+        return $book->toArray();
     }
 
-    public function create(array $data) {
+    public function create(array $data): array
+    {
+        $this->validate($data);
+        $book = new Book(
+            null,
+            $data['judul'],
+            $data['penulis'],
+            (int) $data['tahun'],
+            (int) $data['stok']
+        );
+        $id = $this->repo->save($book);
+        return $this->detail($id);
+    }
+
+    public function update(int $id, array $data): array
+    {
+        if ($this->repo->findById($id) === null) {
+            throw new InvalidArgumentException("Buku dengan ID $id tidak ditemukan", 404);
+        }
+        $this->validate($data);
+        $book = new Book(
+            $id,
+            $data['judul'],
+            $data['penulis'],
+            (int) $data['tahun'],
+            (int) $data['stok']
+        );
+        $this->repo->update($book);
+        return $this->detail($id);
+    }
+
+    public function delete(int $id): void
+    {
+        if ($this->repo->findById($id) === null) {
+            throw new InvalidArgumentException("Buku dengan ID $id tidak ditemukan", 404);
+        }
+        $this->repo->delete($id);
+    }
+
+    private function validate(array $data): void
+    {
         if (empty($data['judul'])) {
-            throw new Exception("Judul wajib diisi");
+            throw new InvalidArgumentException('Judul wajib diisi', 422);
         }
         if (empty($data['penulis'])) {
-            throw new Exception("Penulis wajib diisi");
+            throw new InvalidArgumentException('Penulis wajib diisi', 422);
         }
-
-        $id = $this->repository->create($data);
-        return array_merge(['id' => $id], $data);
-    }
-
-    public function update($id, array $data) {
-        $this->getById($id); // Validasi keberadaan buku
-
-        if (empty($data['judul'])) {
-            throw new Exception("Judul wajib diisi");
+        if (!isset($data['tahun']) || !is_numeric($data['tahun'])) {
+            throw new InvalidArgumentException('Tahun harus berupa angka', 422);
         }
-
-        $this->repository->update($id, $data);
-        return array_merge(['id' => $id], $data);
-    }
-
-    public function delete($id) {
-        $this->getById($id); // Validasi keberadaan buku
-        return $this->repository->delete($id);
+        if (!isset($data['stok']) || !is_numeric($data['stok'])) {
+            throw new InvalidArgumentException('Stok harus berupa angka', 422);
+        }
     }
 }

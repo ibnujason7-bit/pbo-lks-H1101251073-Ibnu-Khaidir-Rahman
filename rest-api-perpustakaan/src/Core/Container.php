@@ -1,25 +1,41 @@
 <?php
 namespace App\Core;
 
-use Exception;
+use Closure;
+use RuntimeException;
 
-class Container {
+class Container
+{
     private array $bindings = [];
+    private array $instances = [];
 
-    public function bind(string $abstract, $concrete) {
-        $this->bindings[$abstract] = $concrete;
+    public function bind(string $abstract, Closure $factory): void
+    {
+        $this->bindings[$abstract] = $factory;
     }
 
-    public function make(string $abstract) {
+    public function singleton(string $abstract, Closure $factory): void
+    {
+        $this->bindings[$abstract] = $factory;
+        $this->instances[$abstract] = null;
+    }
+
+    public function make(string $abstract): mixed
+    {
+        if (!empty($this->instances[$abstract])) {
+            return $this->instances[$abstract];
+        }
+
         if (!isset($this->bindings[$abstract])) {
-            throw new Exception("Binding tidak ditemukan untuk: {$abstract}");
+            throw new RuntimeException("Binding tidak ditemukan: $abstract");
         }
 
-        $concrete = $this->bindings[$abstract];
-        if (is_callable($concrete)) {
-            return $concrete($this);
+        $instance = ($this->bindings[$abstract])($this);
+
+        if (array_key_exists($abstract, $this->instances)) {
+            $this->instances[$abstract] = $instance;
         }
 
-        return $concrete;
+        return $instance;
     }
 }

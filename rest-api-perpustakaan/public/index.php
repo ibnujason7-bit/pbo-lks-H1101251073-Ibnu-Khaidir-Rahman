@@ -1,116 +1,81 @@
 <?php
+// CORS Headers untuk Frontend
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Accept');
+header('Access-Control-Max-Age: 86400');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Config\Env;
+use App\Controllers\BookController;
+use App\Controllers\CategoryController;
+use App\Contracts\BookRepositoryInterface;
+use App\Contracts\CategoryRepositoryInterface;
+use App\Core\Container;
+use App\Core\Request;
+use App\Core\Response;
+use App\Core\Router;
 use App\Database\Connection;
 use App\Repositories\MySQLBookRepository;
-use App\Services\BookService;
-use App\Controllers\BookController;
-use App\Core\Container;
-use App\Core\Router;
-use App\Core\Request;
-use App\Middleware\CorsMiddleware;
-
-//Tambahan utk kategori
 use App\Repositories\MySQLCategoryRepository;
+use App\Services\BookService;
 use App\Services\CategoryService;
-use App\Controllers\CategoryController;
 
-// Load Env & Connection
 Env::load(__DIR__ . '/../.env');
 
-// Aktifkan CORS
-CorsMiddleware::handle();
-
-// Setup Container
 $container = new Container();
+$container->singleton(PDO::class, fn() => Connection::get());
 
-// Setup Container (Dependency Injection)
-$container = new Container();
+$container->bind(
+    BookRepositoryInterface::class,
+    fn(Container $c) => new MySQLBookRepository($c->make(PDO::class))
+);
+$container->bind(
+    BookService::class,
+    fn(Container $c) => new BookService($c->make(BookRepositoryInterface::class))
+);
+$container->bind(
+    BookController::class,
+    fn(Container $c) => new BookController($c->make(BookService::class))
+);
 
-$container->bind(PDO::class, function() {
-    return Connection::get();
-});
+$container->bind(
+    CategoryRepositoryInterface::class,
+    fn(Container $c) => new MySQLCategoryRepository($c->make(PDO::class))
+);
+$container->bind(
+    CategoryService::class,
+    fn(Container $c) => new CategoryService($c->make(CategoryRepositoryInterface::class))
+);
+$container->bind(
+    CategoryController::class,
+    fn(Container $c) => new CategoryController($c->make(CategoryService::class))
+);
 
-$container->bind(BookService::class, function($c) {
-    $pdo = $c->make(PDO::class);
-    $repo = new MySQLBookRepository($pdo);
-    return new BookService($repo);
-});
-
-$container->bind(BookController::class, function($c) {
-    return new BookController($c->make(BookService::class));
-});
-
-//Tambahan utk Kategori
-// Binding Category Service
-$container->bind(CategoryService::class, function($c) {
-    $pdo = $c->make(PDO::class);
-    $repo = new MySQLCategoryRepository($pdo);
-    return new CategoryService($repo);
-});
-
-// Binding Category Controller
-$container->bind(CategoryController::class, function($c) {
-    $service = $c->make(CategoryService::class);
-    return new CategoryController($service);
-});
-
-// Setup Router
 $router = new Router();
-$request = new Request();
+$bookCtrl = $container->make(BookController::class);
+$categoryCtrl = $container->make(CategoryController::class);
 
-$router->get('/api/books', function() use ($container) {
-    $controller = $container->make(BookController::class);
-    $controller->index();
-});
+$router->get('/api/books', [$bookCtrl, 'index']);
+$router->get('/api/books/{id}', [$bookCtrl, 'show']);
+$router->post('/api/books', [$bookCtrl, 'store']);
+$router->put('/api/books/{id}', [$bookCtrl, 'update']);
+$router->delete('/api/books/{id}', [$bookCtrl, 'destroy']);
 
-$router->get('/api/books/{id}', function($id) use ($container) {
-    $controller = $container->make(BookController::class);
-    $controller->show($id);
-});
+$router->get('/api/categories', [$categoryCtrl, 'index']);
+$router->get('/api/categories/{id}', [$categoryCtrl, 'show']);
+$router->post('/api/categories', [$categoryCtrl, 'store']);
+$router->put('/api/categories/{id}', [$categoryCtrl, 'update']);
+$router->delete('/api/categories/{id}', [$categoryCtrl, 'destroy']);
 
-$router->post('/api/books', function() use ($container, $request) {
-    $controller = $container->make(BookController::class);
-    $controller->store($request);
-});
-
-$router->put('/api/books/{id}', function($id) use ($container, $request) {
-    $controller = $container->make(BookController::class);
-    $controller->update($request, $id);
-});
-
-$router->delete('/api/books/{id}', function($id) use ($container) {
-    $controller = $container->make(BookController::class);
-    $controller->destroy($id);
-});
-
-//Tambahan utk Kategori
-// Route Categories
-$router->get('/api/categories', function() use ($container) {
-    $controller = $container->make(CategoryController::class);
-    $controller->index();
-});
-
-$router->get('/api/categories/{id}', function($id) use ($container) {
-    $controller = $container->make(CategoryController::class);
-    $controller->show($id);
-});
-
-$router->post('/api/categories', function() use ($container) {
-    $controller = $container->make(CategoryController::class);
-    $controller->store();
-});
-
-$router->put('/api/categories/{id}', function($id) use ($container) {
-    $controller = $container->make(CategoryController::class);
-    $controller->update($id);
-});
-
-$router->delete('/api/categories/{id}', function($id) use ($container) {
-    $controller = $container->make(CategoryController::class);
-    $controller->destroy($id);
-});
-
-// Dispatch Request
-$router->dispatch($request);
+try {
+    $router->dispatch(new Request());
+} catch (\Throwable $e) {
+    Response::error('Server Error: ' . $e->getMessage(), 500);
+}

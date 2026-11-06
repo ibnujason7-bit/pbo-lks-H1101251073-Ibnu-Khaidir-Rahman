@@ -1,49 +1,41 @@
 <?php
 namespace App\Core;
 
-class Router {
+class Router
+{
     private array $routes = [];
 
-    public function get(string $path, $handler) {
-        $this->addRoute('GET', $path, $handler);
-    }
+    public function get(string $path, callable $h): void { $this->routes['GET'][$path] = $h; }
+    public function post(string $path, callable $h): void { $this->routes['POST'][$path] = $h; }
+    public function put(string $path, callable $h): void { $this->routes['PUT'][$path] = $h; }
+    public function delete(string $path, callable $h): void { $this->routes['DELETE'][$path] = $h; }
 
-    public function post(string $path, $handler) {
-        $this->addRoute('POST', $path, $handler);
-    }
+    public function dispatch(Request $request): void
+    {
+        $method = $request->method();
+        $uri = rtrim($request->uri(), '/') ?: '/';
 
-    public function put(string $path, $handler) {
-        $this->addRoute('PUT', $path, $handler);
-    }
+        if (!isset($this->routes[$method])) {
+            Response::error("HTTP method $method tidak didukung", 405);
+        }
 
-    public function delete(string $path, $handler) {
-        $this->addRoute('DELETE', $path, $handler);
-    }
+        if (isset($this->routes[$method][$uri])) {
+            call_user_func($this->routes[$method][$uri], $request);
+            return;
+        }
 
-    private function addRoute(string $method, string $path, $handler) {
-        $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '([^/]+)', $path);
-        $this->routes[] = [
-            'method' => $method,
-            'path' => $path,
-            'pattern' => "#^" . $pattern . "$#",
-            'handler' => $handler
-        ];
-    }
-
-    public function dispatch(Request $request) {
-        $method = $request->getMethod();
-        $uri = $request->getUri();
-
-        foreach ($this->routes as $route) {
-            if ($route['method'] === $method && preg_match($route['pattern'], $uri, $matches)) {
+        foreach ($this->routes[$method] as $route => $handler) {
+            $pattern = preg_replace('#\{[^}]+\}#', '([^/]+)', $route);
+            if (preg_match("#^$pattern$#", $uri, $matches)) {
                 array_shift($matches);
-                return call_user_func_array($route['handler'], $matches);
+                call_user_func_array(
+                    $handler,
+                    array_merge([$request], $matches)
+                );
+                return;
             }
         }
 
-        Response::json([
-            'success' => false,
-            'message' => "Endpoint tidak ditemukan: {$uri}"
-        ], 404);
+        Response::error("Endpoint tidak ditemukan: $uri", 404);
     }
 }

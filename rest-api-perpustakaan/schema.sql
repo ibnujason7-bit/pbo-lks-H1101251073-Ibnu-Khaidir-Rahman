@@ -1,21 +1,32 @@
-CREATE DATABASE IF NOT EXISTS db_perpustakaan;
-USE db_perpustakaan;
+CREATE DATABASE IF NOT EXISTS perpustakaan
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+USE perpustakaan;
 
 CREATE TABLE IF NOT EXISTS books (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    author VARCHAR(255) NOT NULL,
-    published_year INT(4) NOT NULL,
+    judul VARCHAR(255) NOT NULL,
+    penulis VARCHAR(255) NOT NULL,
+    tahun INT NOT NULL,
+    stok INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-INSERT INTO books (title, author, published_year) VALUES
-('Belajar PHP Modern (PSR-4)', 'John Doe', 2023),
-('Mastering Tailwind CSS', 'Jane Smith', 2024);
+) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nama_kategori VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    nama VARCHAR(100) NOT NULL UNIQUE,
+    deskripsi TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+INSERT INTO books (judul, penulis, tahun, stok) VALUES
+('Laskar Pelangi', 'Andrea Hirata', 2005, 5),
+('Bumi Manusia', 'Pramoedya Ananta Toer', 1980, 3);
+
+INSERT INTO categories (nama, deskripsi) VALUES
+('Fiksi', 'Buku-buku fiksi dan novel'),
+('Non-Fiksi', 'Buku non-fiksi, sains, sejarah'),
+('Teknologi', 'Buku tentang teknologi dan pemrograman');

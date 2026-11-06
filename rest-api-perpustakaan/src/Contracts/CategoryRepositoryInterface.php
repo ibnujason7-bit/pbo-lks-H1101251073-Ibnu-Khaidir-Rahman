@@ -1,11 +1,15 @@
 <?php
-
 namespace App\Contracts;
 
-interface CategoryRepositoryInterface {
-    public function getAll(): array;
-    public function getById(int $id): ?array;
-    public function create(array $data): int;
-    public function update(int $id, array $data): bool;
+use App\Models\Category;
+
+interface CategoryRepositoryInterface
+{
+    /** @return Category[] */
+    public function findAll(): array;
+    public function findById(int $id): ?Category;
+    /** @return int ID baru */
+    public function save(Category $category): int;
+    public function update(Category $category): bool;
     public function delete(int $id): bool;
 }

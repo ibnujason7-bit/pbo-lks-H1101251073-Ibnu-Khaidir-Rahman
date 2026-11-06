@@ -1,89 +1,67 @@
 <?php
 namespace App\Controllers;
 
-use App\Services\BookService;
 use App\Core\Request;
 use App\Core\Response;
-use Exception;
+use App\Services\BookService;
 
-class BookController {
-    private $service;
+class BookController
+{
+    public function __construct(private BookService $service) {}
 
-    public function __construct(BookService $service) {
-        $this->service = $service;
-    }
-
-    public function index() {
-        $books = $this->service->list();
-        $data = array_map(fn($book) => $book->toArray(), $books);
-
-        Response::json([
-            'success' => true,
-            'message' => 'Daftar buku',
-            'data' => $data
-        ], 200);
-    }
-
-    public function show($id) {
+    public function index(Request $request): void
+    {
         try {
-            $book = $this->service->getById($id);
-            Response::json([
-                'success' => true,
-                'message' => 'Detail buku',
-                'data' => $book->toArray()
-            ], 200);
-        } catch (Exception $e) {
-            Response::json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 404);
+            Response::success($this->service->list(), 'Daftar buku');
+        } catch (\Throwable $e) {
+            Response::error($e->getMessage(), 500);
         }
     }
 
-    public function store(Request $request) {
+    public function show(Request $request, string $id): void
+    {
         try {
-            $book = $this->service->create($request->getBody());
-            Response::json([
-                'success' => true,
-                'message' => 'Buku berhasil dibuat',
-                'data' => $book
-            ], 201);
-        } catch (Exception $e) {
-            Response::json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 422);
+            Response::success($this->service->detail((int) $id), 'Detail buku');
+        } catch (\InvalidArgumentException $e) {
+            Response::error($e->getMessage(), $e->getCode() ?: 404);
+        } catch (\Throwable $e) {
+            Response::error($e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, $id) {
+    public function store(Request $request): void
+    {
         try {
-            $book = $this->service->update($id, $request->getBody());
-            Response::json([
-                'success' => true,
-                'message' => 'Buku berhasil diperbarui',
-                'data' => $book
-            ], 200);
-        } catch (Exception $e) {
-            Response::json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 422);
+            $data = $this->service->create($request->body());
+            Response::success($data, 'Buku berhasil dibuat', 201);
+        } catch (\InvalidArgumentException $e) {
+            Response::error($e->getMessage(), $e->getCode() ?: 422);
+        } catch (\Throwable $e) {
+            Response::error($e->getMessage(), 500);
         }
     }
 
-    public function destroy($id) {
+    public function update(Request $request, string $id): void
+    {
         try {
-            $this->service->delete($id);
-            Response::json([
-                'success' => true,
-                'message' => 'Buku berhasil dihapus'
-            ], 200);
-        } catch (Exception $e) {
-            Response::json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 404);
+            $data = $this->service->update((int) $id, $request->body());
+            Response::success($data, 'Buku berhasil diperbarui');
+        } catch (\InvalidArgumentException $e) {
+            Response::error($e->getMessage(), $e->getCode() ?: 422);
+        } catch (\Throwable $e) {
+            Response::error($e->getMessage(), 500);
+        }
+    }
+
+    public function destroy(Request $request, string $id): void
+    {
+        try {
+            $this->service->delete((int) $id);
+            Response::success(null, 'Buku berhasil dihapus');
+        } catch (\InvalidArgumentException $e) {
+            Response::error($e->getMessage(), $e->getCode() ?: 404);
+        } catch (\Throwable $e) {
+            Response::error($e->getMessage(), 500);
         }
     }
 }

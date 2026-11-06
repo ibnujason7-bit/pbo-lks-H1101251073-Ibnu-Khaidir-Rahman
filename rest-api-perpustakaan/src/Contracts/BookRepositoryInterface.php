@@ -1,10 +1,15 @@
 <?php
 namespace App\Contracts;
 
-interface BookRepositoryInterface {
-    public function findAll();
-    public function findById($id);
-    public function create(array $data);
-    public function update($id, array $data);
-    public function delete($id);
+use App\Models\Book;
+
+interface BookRepositoryInterface
+{
+    /** @return Book[] */
+    public function findAll(): array;
+    public function findById(int $id): ?Book;
+    /** @return int ID yang baru dibuat */
+    public function save(Book $book): int;
+    public function update(Book $book): bool;
+    public function delete(int $id): bool;
 }
