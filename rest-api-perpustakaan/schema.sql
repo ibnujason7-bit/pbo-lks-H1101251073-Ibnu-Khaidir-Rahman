@@ -29,4 +29,4 @@ INSERT INTO books (judul, penulis, tahun, stok) VALUES
 INSERT INTO categories (nama, deskripsi) VALUES
 ('Fiksi', 'Buku-buku fiksi dan novel'),
 ('Non-Fiksi', 'Buku non-fiksi, sains, sejarah'),
-('Teknologi', 'Buku tentang teknologi dan pemrograman');
+('Teknologi', 'Buku tentang teknologi dan pemrograman');books
