@@ -9,6 +9,7 @@ use App\Controllers\BookController;
 use App\Core\Container;
 use App\Core\Router;
 use App\Core\Request;
+use App\Middleware\CorsMiddleware;
 
 //Tambahan utk kategori
 use App\Repositories\MySQLCategoryRepository;
@@ -17,6 +18,12 @@ use App\Controllers\CategoryController;
 
 // Load Env & Connection
 Env::load(__DIR__ . '/../.env');
+
+// Aktifkan CORS
+CorsMiddleware::handle();
+
+// Setup Container
+$container = new Container();
 
 // Setup Container (Dependency Injection)
 $container = new Container();
